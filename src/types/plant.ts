@@ -8,6 +8,7 @@ export interface GrowthRecord {
   temperature: number;
   hash: string;
   previousHash: string;
+  source: 'manual' | 'automatic';
 }
 
 export interface Plant {

@@ -66,7 +66,9 @@ const Index = () => {
     });
 
     toast.success("Growth record added to blockchain!", {
-      description: "New block has been mined and verified",
+      description: record.source === 'automatic' 
+        ? "Hardware sensor data recorded and verified" 
+        : "New block has been mined and verified",
     });
   };
 
@@ -117,18 +119,17 @@ const Index = () => {
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full mb-4">
               <Shield className="w-4 h-4 text-secondary" />
-              <span className="text-sm font-medium">Blockchain-Verified Growth Tracking</span>
+              <span className="text-sm font-medium">Manual & Automatic Hardware Tracking</span>
             </div>
             
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-              <span className="gradient-nature bg-clip-text text-transparent">Grow.</span>{" "}
-              <span className="gradient-blockchain bg-clip-text text-transparent">Track.</span>{" "}
-              <span className="text-foreground">Verify.</span>
+              <span className="gradient-nature bg-clip-text text-transparent">GrowLedger</span>{" "}
+              <span className="gradient-blockchain bg-clip-text text-transparent">Bloom</span>
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Monitor your plants' journey with immutable blockchain records. 
-              Every milestone, cryptographically secured forever.
+              Track your plants manually or connect hardware sensors for automatic monitoring. 
+              Water, sunlight, temperature—all recorded on blockchain.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">

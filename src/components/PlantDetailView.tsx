@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plant } from "@/types/plant";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Shield, TrendingUp, Droplet, Sun, Thermometer, Calendar } from "lucide-react";
+import { Shield, TrendingUp, Droplet, Sun, Thermometer, Calendar, Wifi, WifiOff, Hand } from "lucide-react";
 import { shortenHash } from "@/utils/blockchain";
 import { createGrowthRecordHash } from "@/utils/blockchain";
 import { GrowthRecord } from "@/types/plant";
+import { Switch } from "@/components/ui/switch";
 
 interface PlantDetailViewProps {
   plant: Plant | null;
@@ -21,6 +22,8 @@ interface PlantDetailViewProps {
 
 export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: PlantDetailViewProps) => {
   const [showAddRecord, setShowAddRecord] = useState(false);
+  const [hardwareMode, setHardwareMode] = useState(false);
+  const [isHardwareConnected, setIsHardwareConnected] = useState(false);
   const [recordForm, setRecordForm] = useState({
     height: "",
     waterLevel: "",
@@ -28,6 +31,35 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
     temperature: "",
     notes: "",
   });
+
+  // Simulate hardware data polling when in hardware mode
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (hardwareMode && isHardwareConnected) {
+      interval = setInterval(() => {
+        // Simulate receiving data from hardware sensors
+        const hardwareData = {
+          height: (Math.random() * 5 + parseFloat(recordForm.height || "20")).toFixed(1),
+          waterLevel: (Math.random() * 3 + 5).toFixed(0),
+          sunlightHours: (Math.random() * 4 + 4).toFixed(1),
+          temperature: (Math.random() * 5 + 22).toFixed(1),
+        };
+        
+        setRecordForm(prev => ({
+          ...prev,
+          height: hardwareData.height,
+          waterLevel: hardwareData.waterLevel,
+          sunlightHours: hardwareData.sunlightHours,
+          temperature: hardwareData.temperature,
+        }));
+      }, 3000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [hardwareMode, isHardwareConnected]);
 
   if (!plant) return null;
 
@@ -46,6 +78,7 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
       temperature: parseFloat(recordForm.temperature),
       notes: recordForm.notes,
       previousHash,
+      source: hardwareMode && isHardwareConnected ? 'automatic' as const : 'manual' as const,
     };
 
     const hash = await createGrowthRecordHash(recordData);
@@ -54,6 +87,10 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
     onAddRecord(plant.id, newRecord);
     setRecordForm({ height: "", waterLevel: "", sunlightHours: "", temperature: "", notes: "" });
     setShowAddRecord(false);
+  };
+
+  const toggleHardwareConnection = () => {
+    setIsHardwareConnected(!isHardwareConnected);
   };
 
   return (
@@ -117,7 +154,50 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
             </Button>
           ) : (
             <div className="glass-card p-6 rounded-lg space-y-4">
-              <h3 className="text-xl font-semibold">New Growth Record</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold">New Growth Record</h3>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Hand className="w-4 h-4" />
+                    <span className="text-sm">Manual</span>
+                    <Switch checked={hardwareMode} onCheckedChange={setHardwareMode} />
+                    <span className="text-sm">Hardware</span>
+                  </div>
+                  {hardwareMode && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={toggleHardwareConnection}
+                      className="gap-2"
+                    >
+                      {isHardwareConnected ? (
+                        <>
+                          <Wifi className="w-4 h-4 text-green-500" />
+                          Connected
+                        </>
+                      ) : (
+                        <>
+                          <WifiOff className="w-4 h-4 text-muted-foreground" />
+                          Connect
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              {hardwareMode && !isHardwareConnected && (
+                <div className="bg-muted/50 p-3 rounded-lg text-sm text-muted-foreground">
+                  Connect your hardware sensors to automatically capture plant data. Click "Connect" to establish connection.
+                </div>
+              )}
+              
+              {hardwareMode && isHardwareConnected && (
+                <div className="bg-green-500/10 p-3 rounded-lg text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
+                  <Wifi className="w-4 h-4" />
+                  Hardware connected! Data is being automatically captured from sensors.
+                </div>
+              )}
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -129,6 +209,7 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
                     value={recordForm.height}
                     onChange={(e) => setRecordForm({ ...recordForm, height: e.target.value })}
                     className="glass-card"
+                    disabled={hardwareMode && isHardwareConnected}
                   />
                 </div>
                 
@@ -144,6 +225,7 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
                     value={recordForm.waterLevel}
                     onChange={(e) => setRecordForm({ ...recordForm, waterLevel: e.target.value })}
                     className="glass-card"
+                    disabled={hardwareMode && isHardwareConnected}
                   />
                 </div>
                 
@@ -158,6 +240,7 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
                     value={recordForm.sunlightHours}
                     onChange={(e) => setRecordForm({ ...recordForm, sunlightHours: e.target.value })}
                     className="glass-card"
+                    disabled={hardwareMode && isHardwareConnected}
                   />
                 </div>
                 
@@ -172,6 +255,7 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
                     value={recordForm.temperature}
                     onChange={(e) => setRecordForm({ ...recordForm, temperature: e.target.value })}
                     className="glass-card"
+                    disabled={hardwareMode && isHardwareConnected}
                   />
                 </div>
               </div>
@@ -216,11 +300,24 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
                 {[...plant.growthRecords].reverse().map((record, idx) => (
                   <div key={record.id} className="glass-card p-4 rounded-lg space-y-3">
                     <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold text-lg">{record.height} cm</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(record.timestamp).toLocaleString()}
-                        </p>
+                      <div className="flex items-center gap-2">
+                        <div>
+                          <p className="font-semibold text-lg">{record.height} cm</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(record.timestamp).toLocaleString()}
+                          </p>
+                        </div>
+                        {record.source === 'automatic' ? (
+                          <Badge variant="outline" className="text-xs gap-1">
+                            <Wifi className="w-3 h-3" />
+                            Auto
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs gap-1">
+                            <Hand className="w-3 h-3" />
+                            Manual
+                          </Badge>
+                        )}
                       </div>
                       <Badge variant="secondary" className="font-mono text-xs">
                         Block #{plant.growthRecords.length - idx}
