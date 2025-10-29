@@ -12,6 +12,7 @@ import { shortenHash } from "@/utils/blockchain";
 import { createGrowthRecordHash } from "@/utils/blockchain";
 import { GrowthRecord } from "@/types/plant";
 import { Switch } from "@/components/ui/switch";
+import AISuggestions from "./AISuggestions";
 
 interface PlantDetailViewProps {
   plant: Plant | null;
@@ -145,6 +146,11 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
             </div>
           </div>
 
+          <Separator />
+
+          {/* AI Suggestions */}
+          <AISuggestions plant={plant} />
+          
           <Separator />
 
           {/* Add Record Section */}

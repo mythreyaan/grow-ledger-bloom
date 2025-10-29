@@ -1,69 +1,46 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Sprout, Plus, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePlants } from "@/hooks/usePlants";
 import { Plant, GrowthRecord, PlantStats } from "@/types/plant";
 import { Button } from "@/components/ui/button";
 import { PlantCard } from "@/components/PlantCard";
 import { AddPlantDialog } from "@/components/AddPlantDialog";
 import { PlantDetailView } from "@/components/PlantDetailView";
 import { StatsOverview } from "@/components/StatsOverview";
-import { Plus, Sprout, Shield } from "lucide-react";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-plant.jpg";
 
 const Index = () => {
-  const [plants, setPlants] = useState<Plant[]>([]);
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDetailView, setShowDetailView] = useState(false);
+  const { user, logout } = useAuth();
+  const { plants, loading, addPlant, updatePlant, deletePlant } = usePlants();
 
-  // Load plants from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("blockchain-plants");
-    if (saved) {
-      setPlants(JSON.parse(saved));
-    }
-  }, []);
-
-  // Save plants to localStorage
-  useEffect(() => {
-    if (plants.length > 0) {
-      localStorage.setItem("blockchain-plants", JSON.stringify(plants));
-    }
-  }, [plants]);
-
-  const handleAddPlant = (newPlant: Plant) => {
-    setPlants([...plants, newPlant]);
+  const handleAddPlant = async (newPlant: Plant) => {
+    await addPlant(newPlant);
     toast.success("Plant added to blockchain!", {
       description: `${newPlant.name} has been registered with genesis hash`,
     });
   };
 
-  const handleAddRecord = (plantId: string, record: GrowthRecord) => {
-    setPlants((prevPlants) =>
-      prevPlants.map((plant) => {
-        if (plant.id === plantId) {
-          const updatedRecords = [...plant.growthRecords, record];
-          return {
-            ...plant,
-            growthRecords: updatedRecords,
-            currentHeight: record.height,
-            health: Math.min(100, plant.health + 5),
-          };
-        }
-        return plant;
-      })
-    );
+  const handleAddRecord = async (plantId: string, record: GrowthRecord) => {
+    const plant = plants.find(p => p.id === plantId);
+    if (!plant) return;
+
+    const updatedPlant = {
+      ...plant,
+      growthRecords: [...plant.growthRecords, record],
+      currentHeight: record.height,
+      health: Math.min(100, plant.health + 5),
+    };
     
-    setSelectedPlant((prev) => {
-      if (prev && prev.id === plantId) {
-        return {
-          ...prev,
-          growthRecords: [...prev.growthRecords, record],
-          currentHeight: record.height,
-          health: Math.min(100, prev.health + 5),
-        };
-      }
-      return prev;
-    });
+    await updatePlant(plantId, updatedPlant);
+    
+    if (selectedPlant?.id === plantId) {
+      setSelectedPlant(updatedPlant);
+    }
 
     toast.success("Growth record added to blockchain!", {
       description: record.source === 'automatic' 
@@ -75,6 +52,13 @@ const Index = () => {
   const handlePlantClick = (plant: Plant) => {
     setSelectedPlant(plant);
     setShowDetailView(true);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    toast.success("Signed out", {
+      description: "You have been successfully signed out.",
+    });
   };
 
   const calculateStats = (): PlantStats => {
@@ -117,9 +101,21 @@ const Index = () => {
         
         <div className="relative z-10 container mx-auto px-4 py-24 md:py-32">
           <div className="max-w-4xl mx-auto text-center space-y-6">
-            <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full mb-4">
-              <Shield className="w-4 h-4 text-secondary" />
-              <span className="text-sm font-medium">Manual & Automatic Hardware Tracking</span>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1" />
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground hidden sm:inline">
+                  {user?.email}
+                </span>
+                <Button 
+                  onClick={handleLogout}
+                  variant="outline"
+                  size="sm"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
             </div>
             
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
@@ -128,8 +124,7 @@ const Index = () => {
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Track your plants manually or connect hardware sensors for automatic monitoring. 
-              Water, sunlight, temperature—all recorded on blockchain.
+              Track your plants manually or connect hardware sensors for automatic monitoring with AI-powered care suggestions.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
@@ -141,10 +136,6 @@ const Index = () => {
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Add Your First Plant
-              </Button>
-              <Button size="lg" variant="glass" className="text-lg">
-                <Sprout className="w-5 h-5 mr-2" />
-                Learn More
               </Button>
             </div>
           </div>
@@ -176,14 +167,18 @@ const Index = () => {
           )}
         </div>
 
-        {plants.length === 0 ? (
+        {loading ? (
+          <div className="glass-card rounded-xl p-16 text-center">
+            <p className="text-muted-foreground">Loading your plants...</p>
+          </div>
+        ) : plants.length === 0 ? (
           <div className="glass-card rounded-xl p-16 text-center">
             <div className="max-w-md mx-auto space-y-4">
               <Sprout className="w-16 h-16 mx-auto text-primary animate-float" />
               <h3 className="text-2xl font-semibold">No Plants Yet</h3>
               <p className="text-muted-foreground">
                 Begin your journey by adding your first plant. Each plant gets a unique blockchain identity
-                that tracks its entire growth history.
+                that tracks its entire growth history with AI-powered insights.
               </p>
               <Button variant="hero" onClick={() => setShowAddDialog(true)} className="mt-4">
                 <Plus className="w-4 h-4 mr-2" />
