@@ -44,15 +44,30 @@ export const usePlants = () => {
   }, [user]);
 
   const addPlant = async (plant: Omit<Plant, 'id'>) => {
-    if (!user) return;
+    if (!user) {
+      throw new Error("You must be logged in to add plants");
+    }
     
-    const plantData = {
-      ...plant,
-      userId: user.uid,
-      createdAt: Timestamp.now()
-    };
-    
-    await addDoc(collection(db, 'plants'), plantData);
+    try {
+      const plantData = {
+        name: plant.name,
+        species: plant.species,
+        plantedDate: plant.plantedDate,
+        imageUrl: plant.imageUrl || null,
+        currentHeight: plant.currentHeight,
+        health: plant.health,
+        growthRecords: plant.growthRecords || [],
+        genesisHash: plant.genesisHash,
+        userId: user.uid,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      };
+      
+      await addDoc(collection(db, 'plants'), plantData);
+    } catch (error) {
+      console.error("Firebase error:", error);
+      throw error;
+    }
   };
 
   const updatePlant = async (id: string, updates: Partial<Plant>) => {

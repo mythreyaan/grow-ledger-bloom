@@ -2,15 +2,14 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Replace these with your Firebase project configuration
-// Get these from Firebase Console > Project Settings > General
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCQ1M2NvWFnrhsES9P0iRBkCksxNc_4n2Q",
+  authDomain: "verde-chain.firebaseapp.com",
+  projectId: "verde-chain",
+  storageBucket: "verde-chain.firebasestorage.app",
+  messagingSenderId: "311078521873",
+  appId: "1:311078521873:web:85488d89540ecb6d3035b0",
+  measurementId: "G-ZT9LR7VPGH"
 };
 
 // Initialize Firebase

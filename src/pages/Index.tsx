@@ -19,10 +19,17 @@ const Index = () => {
   const { plants, loading, addPlant, updatePlant, deletePlant } = usePlants();
 
   const handleAddPlant = async (newPlant: Plant) => {
-    await addPlant(newPlant);
-    toast.success("Plant added to blockchain!", {
-      description: `${newPlant.name} has been registered with genesis hash`,
-    });
+    try {
+      await addPlant(newPlant);
+      toast.success("Plant added to blockchain!", {
+        description: `${newPlant.name} has been registered with genesis hash`,
+      });
+    } catch (error) {
+      console.error("Error adding plant:", error);
+      toast.error("Failed to add plant", {
+        description: error instanceof Error ? error.message : "Please try again",
+      });
+    }
   };
 
   const handleAddRecord = async (plantId: string, record: GrowthRecord) => {
