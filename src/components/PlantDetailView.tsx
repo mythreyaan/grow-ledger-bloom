@@ -12,7 +12,9 @@ import { shortenHash } from "@/utils/blockchain";
 import { createGrowthRecordHash } from "@/utils/blockchain";
 import { GrowthRecord } from "@/types/plant";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AISuggestions from "./AISuggestions";
+import { BlockchainExplorer } from "./BlockchainExplorer";
 
 interface PlantDetailViewProps {
   plant: Plant | null;
@@ -148,8 +150,19 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
 
           <Separator />
 
-          {/* AI Suggestions */}
-          <AISuggestions plant={plant} />
+          {/* Tabs for AI and Blockchain */}
+          <Tabs defaultValue="ai" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="ai">AI Care Suggestions</TabsTrigger>
+              <TabsTrigger value="blockchain">Blockchain Explorer</TabsTrigger>
+            </TabsList>
+            <TabsContent value="ai" className="mt-4">
+              <AISuggestions plant={plant} />
+            </TabsContent>
+            <TabsContent value="blockchain" className="mt-4">
+              <BlockchainExplorer plant={plant} />
+            </TabsContent>
+          </Tabs>
           
           <Separator />
 

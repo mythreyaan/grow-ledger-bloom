@@ -9,6 +9,7 @@ import { PlantCard } from "@/components/PlantCard";
 import { AddPlantDialog } from "@/components/AddPlantDialog";
 import { PlantDetailView } from "@/components/PlantDetailView";
 import { StatsOverview } from "@/components/StatsOverview";
+import { WalletConnect } from "@/components/WalletConnect";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-plant.jpg";
 
@@ -150,6 +151,13 @@ const Index = () => {
               </Button>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Web3 Wallet Section */}
+      <section className="container mx-auto px-4 py-12">
+        <div className="max-w-md mx-auto">
+          <WalletConnect />
         </div>
       </section>
 
