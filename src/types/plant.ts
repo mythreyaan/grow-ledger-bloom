@@ -21,6 +21,8 @@ export interface Plant {
   health: number;
   growthRecords: GrowthRecord[];
   genesisHash: string;
+  automaticRecording: boolean;
+  lastAutomaticRecord?: number;
 }
 
 export interface PlantStats {

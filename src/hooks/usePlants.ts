@@ -58,6 +58,8 @@ export const usePlants = () => {
         health: plant.health,
         growthRecords: plant.growthRecords || [],
         genesisHash: plant.genesisHash,
+        automaticRecording: plant.automaticRecording || false,
+        lastAutomaticRecord: plant.lastAutomaticRecord || null,
         userId: user.uid,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()

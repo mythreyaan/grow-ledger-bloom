@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Sprout, Plus, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlants } from "@/hooks/usePlants";
+import { useAutomaticRecording } from "@/hooks/useAutomaticRecording";
 import { Plant, GrowthRecord, PlantStats } from "@/types/plant";
 import { Button } from "@/components/ui/button";
 import { PlantCard } from "@/components/PlantCard";
@@ -17,6 +18,9 @@ const Index = () => {
   const [showDetailView, setShowDetailView] = useState(false);
   const { user, logout } = useAuth();
   const { plants, loading, addPlant, updatePlant, deletePlant } = usePlants();
+  
+  // Enable automatic recording for plants
+  useAutomaticRecording(plants, updatePlant);
 
   const handleAddPlant = async (newPlant: Plant) => {
     try {

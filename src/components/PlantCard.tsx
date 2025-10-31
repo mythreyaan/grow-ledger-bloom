@@ -1,7 +1,7 @@
 import { Plant } from "@/types/plant";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sprout, TrendingUp, Activity } from "lucide-react";
+import { Sprout, TrendingUp, Activity, Radio } from "lucide-react";
 import { shortenHash } from "@/utils/blockchain";
 
 interface PlantCardProps {
@@ -33,10 +33,16 @@ export const PlantCard = ({ plant, onClick }: PlantCardProps) => {
             <Sprout className="w-20 h-20 text-white/80 animate-float" />
           </div>
         )}
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
           <Badge className={`${getHealthColor(plant.health)} text-white`}>
             {plant.health}% Health
           </Badge>
+          {plant.automaticRecording && (
+            <Badge className="bg-chart-2 text-white flex items-center gap-1">
+              <Radio className="w-3 h-3 animate-pulse" />
+              Auto Recording
+            </Badge>
+          )}
         </div>
       </div>
       

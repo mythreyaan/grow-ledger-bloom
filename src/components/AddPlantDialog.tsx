@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Plant } from "@/types/plant";
 import { createGenesisHash } from "@/utils/blockchain";
 import { Sprout } from "lucide-react";
@@ -19,6 +20,7 @@ export const AddPlantDialog = ({ open, onOpenChange, onAddPlant }: AddPlantDialo
     species: "",
     initialHeight: "",
     imageUrl: "",
+    automaticRecording: false,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,10 +40,12 @@ export const AddPlantDialog = ({ open, onOpenChange, onAddPlant }: AddPlantDialo
       health: 100,
       growthRecords: [],
       genesisHash,
+      automaticRecording: formData.automaticRecording,
+      lastAutomaticRecord: formData.automaticRecording ? timestamp : undefined,
     };
 
     onAddPlant(newPlant);
-    setFormData({ name: "", species: "", initialHeight: "", imageUrl: "" });
+    setFormData({ name: "", species: "", initialHeight: "", imageUrl: "", automaticRecording: false });
     onOpenChange(false);
   };
 
@@ -103,6 +107,22 @@ export const AddPlantDialog = ({ open, onOpenChange, onAddPlant }: AddPlantDialo
               onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
               placeholder="https://..."
               className="glass-card"
+            />
+          </div>
+          
+          <div className="flex items-center justify-between space-x-2 p-4 glass-card rounded-lg">
+            <div className="space-y-0.5">
+              <Label htmlFor="automatic" className="text-base font-medium">
+                Automatic Recording
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Record growth data automatically every hour with simulated sensors
+              </p>
+            </div>
+            <Switch
+              id="automatic"
+              checked={formData.automaticRecording}
+              onCheckedChange={(checked) => setFormData({ ...formData, automaticRecording: checked })}
             />
           </div>
           
