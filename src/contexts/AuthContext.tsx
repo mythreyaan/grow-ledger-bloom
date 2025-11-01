@@ -6,12 +6,15 @@ import {
   signOut,
   onAuthStateChanged
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
+import { UserRole } from '@/types/plant';
 
 interface AuthContextType {
   user: User | null;
+  userRole: UserRole | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, role?: UserRole) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -28,19 +31,34 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
+      if (user) {
+        // Fetch user role from Firestore
+        const roleDoc = await getDoc(doc(db, 'userRoles', user.uid));
+        setUserRole((roleDoc.data()?.role as UserRole) || 'farmer');
+      } else {
+        setUserRole(null);
+      }
       setLoading(false);
     });
 
     return unsubscribe;
   }, []);
 
-  const signUp = async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password);
+  const signUp = async (email: string, password: string, role: UserRole = 'farmer') => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    // Store user role in Firestore
+    await setDoc(doc(db, 'userRoles', userCredential.user.uid), {
+      role,
+      email,
+      createdAt: new Date()
+    });
+    setUserRole(role);
   };
 
   const signIn = async (email: string, password: string) => {
@@ -53,6 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const value = {
     user,
+    userRole,
     loading,
     signUp,
     signIn,

@@ -34,6 +34,7 @@ export const AddPlantDialog = ({ open, onOpenChange, onAddPlant }: AddPlantDialo
       id: plantId,
       name: formData.name,
       species: formData.species,
+      type: formData.species, // Alias for backward compatibility
       plantedDate: timestamp,
       imageUrl: formData.imageUrl || undefined,
       currentHeight: parseFloat(formData.initialHeight),

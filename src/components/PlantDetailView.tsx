@@ -15,6 +15,8 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AISuggestions from "./AISuggestions";
 import { BlockchainExplorer } from "./BlockchainExplorer";
+import { AIPredictor } from "./AIPredictor";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PlantDetailViewProps {
   plant: Plant | null;
@@ -24,6 +26,7 @@ interface PlantDetailViewProps {
 }
 
 export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: PlantDetailViewProps) => {
+  const { userRole } = useAuth();
   const [showAddRecord, setShowAddRecord] = useState(false);
   const [hardwareMode, setHardwareMode] = useState(false);
   const [isHardwareConnected, setIsHardwareConnected] = useState(false);
@@ -373,10 +376,10 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
                     </div>
                   </div>
                 ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
       </DialogContent>
     </Dialog>
   );

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sprout, Plus, LogOut } from "lucide-react";
+import { Sprout, Plus, LogOut, BarChart3, Grid3X3 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlants } from "@/hooks/usePlants";
 import { useAutomaticRecording } from "@/hooks/useAutomaticRecording";
@@ -10,6 +10,10 @@ import { AddPlantDialog } from "@/components/AddPlantDialog";
 import { PlantDetailView } from "@/components/PlantDetailView";
 import { StatsOverview } from "@/components/StatsOverview";
 import { WalletConnect } from "@/components/WalletConnect";
+import { Dashboard } from "@/components/Dashboard";
+import { WeatherWidget } from "@/components/WeatherWidget";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-plant.jpg";
 
@@ -17,7 +21,8 @@ const Index = () => {
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDetailView, setShowDetailView] = useState(false);
-  const { user, logout } = useAuth();
+  const [activeView, setActiveView] = useState<'grid' | 'dashboard'>('grid');
+  const { user, userRole, logout } = useAuth();
   const { plants, loading, addPlant, updatePlant, deletePlant } = usePlants();
   
   // Enable automatic recording for plants
@@ -139,25 +144,32 @@ const Index = () => {
               Track your plants manually or connect hardware sensors for automatic monitoring with AI-powered care suggestions.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
               <Button
                 size="lg"
                 variant="hero"
                 onClick={() => setShowAddDialog(true)}
                 className="text-lg"
+                disabled={userRole === 'researcher'}
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Add Your First Plant
               </Button>
+              {userRole && (
+                <Badge variant="secondary" className="text-sm px-4 py-2">
+                  {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                </Badge>
+              )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Web3 Wallet Section */}
+      {/* Web3 Wallet & Weather Section */}
       <section className="container mx-auto px-4 py-12">
-        <div className="max-w-md mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-4xl mx-auto">
           <WalletConnect />
+          <WeatherWidget />
         </div>
       </section>
 
@@ -168,23 +180,39 @@ const Index = () => {
         </section>
       )}
 
-      {/* Plants Grid */}
+      {/* Plants Grid / Dashboard */}
       <section className="container mx-auto px-4 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-3xl font-bold">Your Plant Garden</h2>
-            <p className="text-muted-foreground mt-1">
-              {plants.length === 0 ? "Start your blockchain garden" : `Managing ${plants.length} plants`}
-            </p>
+        {/* View Toggle */}
+        {plants.length > 0 && (
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <div>
+                <h2 className="text-3xl font-bold">Your Plant Garden</h2>
+                <p className="text-muted-foreground mt-1">
+                  Managing {plants.length} plant{plants.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+              <Tabs value={activeView} onValueChange={(v) => setActiveView(v as 'grid' | 'dashboard')}>
+                <TabsList>
+                  <TabsTrigger value="grid" className="gap-2">
+                    <Grid3X3 className="h-4 w-4" />
+                    Plants
+                  </TabsTrigger>
+                  <TabsTrigger value="dashboard" className="gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    Analytics
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            {activeView === 'grid' && userRole !== 'researcher' && (
+              <Button variant="blockchain" onClick={() => setShowAddDialog(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Plant
+              </Button>
+            )}
           </div>
-          
-          {plants.length > 0 && (
-            <Button variant="blockchain" onClick={() => setShowAddDialog(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Plant
-            </Button>
-          )}
-        </div>
+        )}
 
         {loading ? (
           <div className="glass-card rounded-xl p-16 text-center">
@@ -199,12 +227,16 @@ const Index = () => {
                 Begin your journey by adding your first plant. Each plant gets a unique blockchain identity
                 that tracks its entire growth history with AI-powered insights.
               </p>
-              <Button variant="hero" onClick={() => setShowAddDialog(true)} className="mt-4">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Your First Plant
-              </Button>
+              {userRole !== 'researcher' && (
+                <Button variant="hero" onClick={() => setShowAddDialog(true)} className="mt-4">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Your First Plant
+                </Button>
+              )}
             </div>
           </div>
+        ) : activeView === 'dashboard' ? (
+          <Dashboard plants={plants} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {plants.map((plant) => (
