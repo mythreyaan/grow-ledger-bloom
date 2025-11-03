@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Plant } from "@/types/plant";
 import { createGenesisHash } from "@/utils/blockchain";
-import { Sprout } from "lucide-react";
+import { Sprout, Hand, Wifi } from "lucide-react";
+import { OTPVerification } from "./OTPVerification";
+import { toast } from "sonner";
 
 interface AddPlantDialogProps {
   open: boolean;
@@ -20,8 +22,10 @@ export const AddPlantDialog = ({ open, onOpenChange, onAddPlant }: AddPlantDialo
     species: "",
     initialHeight: "",
     imageUrl: "",
-    automaticRecording: false,
+    recordingMode: "manual", // "manual" or "automatic"
   });
+  const [showOTP, setShowOTP] = useState(false);
+  const [pendingPlant, setPendingPlant] = useState<Plant | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,12 +45,24 @@ export const AddPlantDialog = ({ open, onOpenChange, onAddPlant }: AddPlantDialo
       health: 100,
       growthRecords: [],
       genesisHash,
-      automaticRecording: formData.automaticRecording,
-      lastAutomaticRecord: formData.automaticRecording ? timestamp : undefined,
+      automaticRecording: formData.recordingMode === "automatic",
+      lastAutomaticRecord: formData.recordingMode === "automatic" ? timestamp : undefined,
     };
 
-    onAddPlant(newPlant);
-    setFormData({ name: "", species: "", initialHeight: "", imageUrl: "", automaticRecording: false });
+    setPendingPlant(newPlant);
+    setShowOTP(true);
+  };
+
+  const handleOTPVerify = () => {
+    if (!pendingPlant) return;
+    
+    onAddPlant(pendingPlant);
+    toast.success("Plant added successfully!", {
+      description: `${pendingPlant.name} has been verified and added to your garden`
+    });
+    
+    setFormData({ name: "", species: "", initialHeight: "", imageUrl: "", recordingMode: "manual" });
+    setPendingPlant(null);
     onOpenChange(false);
   };
 
@@ -58,6 +74,9 @@ export const AddPlantDialog = ({ open, onOpenChange, onAddPlant }: AddPlantDialo
             <Sprout className="w-6 h-6 text-primary" />
             Add New Plant
           </DialogTitle>
+          <DialogDescription>
+            Register your plant with blockchain verification. OTP authentication required.
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -111,26 +130,50 @@ export const AddPlantDialog = ({ open, onOpenChange, onAddPlant }: AddPlantDialo
             />
           </div>
           
-          <div className="flex items-center justify-between space-x-2 p-4 glass-card rounded-lg">
-            <div className="space-y-0.5">
-              <Label htmlFor="automatic" className="text-base font-medium">
-                Automatic Recording
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Record growth data automatically every hour with simulated sensors
-              </p>
-            </div>
-            <Switch
-              id="automatic"
-              checked={formData.automaticRecording}
-              onCheckedChange={(checked) => setFormData({ ...formData, automaticRecording: checked })}
-            />
+          <div className="space-y-3">
+            <Label className="text-base font-medium">Recording Mode</Label>
+            <RadioGroup 
+              value={formData.recordingMode} 
+              onValueChange={(value) => setFormData({ ...formData, recordingMode: value })}
+            >
+              <div className="flex items-center space-x-2 p-4 glass-card rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
+                <RadioGroupItem value="manual" id="manual" />
+                <div className="flex-1">
+                  <Label htmlFor="manual" className="cursor-pointer flex items-center gap-2 font-medium">
+                    <Hand className="w-4 h-4" />
+                    Manual Recording
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Record growth data manually with OTP verification and image attachment
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 p-4 glass-card rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
+                <RadioGroupItem value="automatic" id="automatic" />
+                <div className="flex-1">
+                  <Label htmlFor="automatic" className="cursor-pointer flex items-center gap-2 font-medium">
+                    <Wifi className="w-4 h-4" />
+                    Automatic (Hardware Sensors)
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Record growth data automatically every 6 hours via connected sensors
+                  </p>
+                </div>
+              </div>
+            </RadioGroup>
           </div>
           
           <Button type="submit" className="w-full" variant="hero">
             Create Plant Profile
           </Button>
         </form>
+
+        <OTPVerification
+          open={showOTP}
+          onOpenChange={setShowOTP}
+          onVerify={handleOTPVerify}
+          purpose="plant registration"
+        />
       </DialogContent>
     </Dialog>
   );

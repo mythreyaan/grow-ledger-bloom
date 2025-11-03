@@ -155,11 +155,15 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
 
           {/* Tabs for AI and Blockchain */}
           <Tabs defaultValue="ai" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="ai">AI Care Suggestions</TabsTrigger>
-              <TabsTrigger value="blockchain">Blockchain Explorer</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="ai">AI Predictions</TabsTrigger>
+              <TabsTrigger value="suggestions">Care Tips</TabsTrigger>
+              <TabsTrigger value="blockchain">Blockchain</TabsTrigger>
             </TabsList>
             <TabsContent value="ai" className="mt-4">
+              <AIPredictor plant={plant} />
+            </TabsContent>
+            <TabsContent value="suggestions" className="mt-4">
               <AISuggestions plant={plant} />
             </TabsContent>
             <TabsContent value="blockchain" className="mt-4">
@@ -171,7 +175,12 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
 
           {/* Add Record Section */}
           {!showAddRecord ? (
-            <Button onClick={() => setShowAddRecord(true)} variant="blockchain" className="w-full">
+            <Button 
+              onClick={() => setShowAddRecord(true)} 
+              variant="blockchain" 
+              className="w-full"
+              disabled={userRole === 'authority'}
+            >
               Add Growth Record
             </Button>
           ) : (

@@ -6,56 +6,66 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Sprout } from 'lucide-react';
+import { UserRole } from '@/types/plant';
+import { OTPVerification } from '@/components/OTPVerification';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<UserRole>('farmer');
   const [loading, setLoading] = useState(false);
+  const [showOTP, setShowOTP] = useState(false);
+  const [otpPurpose, setOtpPurpose] = useState<'signin' | 'signup'>('signin');
+  const [pendingAuth, setPendingAuth] = useState<{email: string, password: string, role?: UserRole} | null>(null);
   const { signUp, signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      await signUp(email, password);
-      toast({
-        title: "Account created!",
-        description: "Welcome to GrowLedger Bloom",
-      });
-      navigate('/');
-    } catch (error: any) {
-      toast({
-        title: "Sign up failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    setPendingAuth({ email, password, role });
+    setOtpPurpose('signup');
+    setShowOTP(true);
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPendingAuth({ email, password });
+    setOtpPurpose('signin');
+    setShowOTP(true);
+  };
+
+  const handleOTPVerify = async () => {
+    if (!pendingAuth) return;
+    
     setLoading(true);
     try {
-      await signIn(email, password);
-      toast({
-        title: "Welcome back!",
-        description: "Successfully signed in",
-      });
+      if (otpPurpose === 'signup') {
+        await signUp(pendingAuth.email, pendingAuth.password, pendingAuth.role);
+        toast({
+          title: "Account created!",
+          description: "Welcome to GrowLedger Bloom",
+        });
+      } else {
+        await signIn(pendingAuth.email, pendingAuth.password);
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in",
+        });
+      }
       navigate('/');
     } catch (error: any) {
       toast({
-        title: "Sign in failed",
+        title: `${otpPurpose === 'signup' ? 'Sign up' : 'Sign in'} failed`,
         description: error.message,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
+      setPendingAuth(null);
     }
   };
 
@@ -148,6 +158,18 @@ const Auth = () => {
                       minLength={6}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="role">User Role</Label>
+                    <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="farmer">Farmer</SelectItem>
+                        <SelectItem value="authority">Government Authority</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? 'Creating account...' : 'Sign Up'}
                   </Button>
@@ -156,6 +178,13 @@ const Auth = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <OTPVerification
+          open={showOTP}
+          onOpenChange={setShowOTP}
+          onVerify={handleOTPVerify}
+          purpose={otpPurpose === 'signup' ? 'account creation' : 'sign in'}
+        />
       </div>
     </div>
   );

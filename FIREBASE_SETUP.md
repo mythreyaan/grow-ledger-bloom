@@ -63,17 +63,27 @@ service cloud.firestore {
       // Farmers can create and manage their own plants
       allow create: if request.auth != null && 
                       request.auth.uid == request.resource.data.userId &&
-                      getUserRole() in ['farmer', 'admin'];
+                      getUserRole() == 'farmer';
       
-      // Farmers can read/write their own plants
+      // Users can read/write their own plants
       allow read, write: if request.auth != null && 
                            request.auth.uid == resource.data.userId;
       
-      // Researchers can read all plants but not write
-      allow read: if request.auth != null && getUserRole() == 'researcher';
-      
-      // Admins can read/write all plants
-      allow read, write: if request.auth != null && getUserRole() == 'admin';
+      // Authorities can read all plants for claim verification
+      allow read: if request.auth != null && getUserRole() == 'authority';
+    }
+
+    // Claims collection - for subsidy/insurance verification
+    match /claims/{claimId} {
+      // Farmers can create their own claims and read their own claims
+      allow create: if request.auth != null && request.resource.data.farmerId == request.auth.uid;
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.farmerId ||
+        getUserRole() == 'authority'
+      );
+      // Only authorities can update claims
+      allow update: if request.auth != null && getUserRole() == 'authority';
+      allow delete: if false; // Claims cannot be deleted
     }
 
     // User roles collection
@@ -84,8 +94,8 @@ service cloud.firestore {
       // Only allow creation during signup (handled in code)
       allow create: if request.auth != null && request.auth.uid == userId;
       
-      // Only admins can update roles
-      allow write: if request.auth != null && getUserRole() == 'admin';
+      // Only authorities can update roles
+      allow write: if request.auth != null && getUserRole() == 'authority';
     }
   }
 }
@@ -93,14 +103,16 @@ service cloud.firestore {
 
 ## Features Included
 
-✅ **Firebase Authentication** - Email/password sign up and login
+✅ **Firebase Authentication** - Email/password sign up and login with OTP verification
 ✅ **Firestore Database** - Real-time user-specific plant data storage
-✅ **Role-Based Access Control** - Farmer, Researcher, and Admin roles
+✅ **Role-Based Access Control** - Farmer and Government Authority roles
+✅ **Subsidy & Insurance Claims** - Blockchain-verified crop claim submission and approval
+✅ **OTP Verification** - Secure authentication for sign up/in and plant registration
 ✅ **AI Care Suggestions** - Smart recommendations based on plant data
 ✅ **AI Predictions** - ML-powered predictions for watering, growth, and stress detection
 ✅ **Analytics Dashboard** - Charts and trends for plant data
 ✅ **Weather Integration** - Real-time weather data (OpenWeather API)
-✅ **Hardware Integration** - Manual and automatic sensor tracking
+✅ **Hardware Integration** - Manual and automatic sensor tracking (6-hour intervals)
 ✅ **Blockchain Verification** - Growth records with hash verification
 ✅ **Web3 Wallet** - MetaMask integration for blockchain features
 
@@ -108,30 +120,49 @@ service cloud.firestore {
 
 ### Farmer (Default)
 - Add and manage their own plants
-- Record growth data manually or via hardware
+- Record growth data manually (with OTP + image) or via hardware sensors (auto every 6 hours)
+- Submit subsidy and insurance claims for government verification
 - View AI predictions and care suggestions
+- Track claim status (pending/approved/rejected)
 - Access personal analytics dashboard
 
-### Researcher
-- View all plants in the system (read-only)
-- Access analytics and trends across all data
-- Cannot add or modify plant data
-- Perfect for data analysis and research purposes
+### Government Authority
+- Review and verify all submitted claims
+- Approve or reject subsidy/insurance requests with remarks
+- View all plants in the system for claim verification
+- Access comprehensive analytics and claim statistics
+- Cannot add or modify plant data (read-only access)
 
-### Admin
-- Full access to all plants
-- Can manage any plant data
-- Approve or verify records before blockchain entry
-- Manage user roles (requires manual Firestore update)
+## Claim Verification System
+
+The platform includes a complete subsidy and insurance verification system:
+
+### For Farmers:
+1. Submit claims for registered plants
+2. Choose scheme type (Subsidy or Insurance)
+3. Specify claim amount in INR (₹)
+4. Track claim status in real-time
+5. View authority remarks for approved/rejected claims
+
+### For Authorities:
+1. View all pending claims in a centralized dashboard
+2. Access plant growth data linked to each claim
+3. Approve or reject claims with detailed remarks
+4. Generate blockchain-verified certificates (coming soon)
+5. View analytics on claim distribution and approval rates
 
 ## Usage
 
-1. Sign up with your email and password (default role: Farmer)
-2. Add your first plant (if you're a Farmer or Admin)
-3. Track growth manually or connect hardware sensors
-4. Get AI-powered care suggestions and predictions
-5. View analytics dashboard for trends and insights
-6. Connect MetaMask wallet for blockchain verification
+1. **Sign Up**: Create account with email/password and select your role (Farmer/Authority)
+2. **OTP Verification**: Complete OTP verification for secure authentication (Demo OTP: 123456)
+3. **Add Plants**: Register plants with OTP verification and choose recording mode:
+   - **Manual**: Record data manually with OTP verification and image attachment
+   - **Automatic**: Connect hardware sensors for automatic recording every 6 hours
+4. **Submit Claims**: Farmers can submit subsidy/insurance claims linked to their plants
+5. **Verify Claims**: Authorities review and approve/reject claims with remarks
+6. **Track Growth**: Get AI-powered care suggestions and predictions
+7. **View Analytics**: Access comprehensive dashboards for plant and claim data
+8. **Connect Wallet**: Link MetaMask wallet for blockchain verification
 
 ## Weather API Setup (Optional)
 
@@ -154,3 +185,16 @@ const WEATHER_API_KEY = 'your_actual_api_key_here';
 - Real-time updates sync across all your devices
 - Weather widget shows demo data until you add your API key
 - AI predictions improve with more data points (7+ records recommended)
+- Demo OTP is set to "123456" for testing purposes
+- Automatic hardware recording captures data every 6 hours
+- Claims are immutable once submitted (blockchain principle)
+- Authorities cannot delete claims, only approve/reject with remarks
+
+## Government Schemes Supported
+
+This platform is designed to support Tamil Nadu government schemes including:
+- **PMFBY** (Pradhan Mantri Fasal Bima Yojana) - Crop Insurance
+- **Organic Farming Subsidies** - Financial support for organic cultivation
+- **State Agricultural Subsidies** - Various state-level support schemes
+
+The blockchain-verified growth data ensures transparent and tamper-proof claim verification.

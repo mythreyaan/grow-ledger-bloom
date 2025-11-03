@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sprout, Plus, LogOut, BarChart3, Grid3X3 } from "lucide-react";
+import { Sprout, Plus, LogOut, BarChart3, Grid3X3, FileText, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlants } from "@/hooks/usePlants";
 import { useAutomaticRecording } from "@/hooks/useAutomaticRecording";
@@ -12,6 +12,10 @@ import { StatsOverview } from "@/components/StatsOverview";
 import { WalletConnect } from "@/components/WalletConnect";
 import { Dashboard } from "@/components/Dashboard";
 import { WeatherWidget } from "@/components/WeatherWidget";
+import { ClaimSubmission } from "@/components/ClaimSubmission";
+import { ClaimsList } from "@/components/ClaimsList";
+import { AuthorityClaimApproval } from "@/components/AuthorityClaimApproval";
+import { useClaims } from "@/hooks/useClaims";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -21,9 +25,10 @@ const Index = () => {
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDetailView, setShowDetailView] = useState(false);
-  const [activeView, setActiveView] = useState<'grid' | 'dashboard'>('grid');
+  const [activeView, setActiveView] = useState<'grid' | 'dashboard' | 'claims'>('grid');
   const { user, userRole, logout } = useAuth();
   const { plants, loading, addPlant, updatePlant, deletePlant } = usePlants();
+  const { claims, loading: claimsLoading } = useClaims();
   
   // Enable automatic recording for plants
   useAutomaticRecording(plants, updatePlant);
@@ -150,7 +155,7 @@ const Index = () => {
                 variant="hero"
                 onClick={() => setShowAddDialog(true)}
                 className="text-lg"
-                disabled={userRole === 'researcher'}
+                disabled={userRole === 'authority'}
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Add Your First Plant
@@ -192,7 +197,7 @@ const Index = () => {
                   Managing {plants.length} plant{plants.length !== 1 ? 's' : ''}
                 </p>
               </div>
-              <Tabs value={activeView} onValueChange={(v) => setActiveView(v as 'grid' | 'dashboard')}>
+              <Tabs value={activeView} onValueChange={(v) => setActiveView(v as any)}>
                 <TabsList>
                   <TabsTrigger value="grid" className="gap-2">
                     <Grid3X3 className="h-4 w-4" />
@@ -202,10 +207,14 @@ const Index = () => {
                     <BarChart3 className="h-4 w-4" />
                     Analytics
                   </TabsTrigger>
+                  <TabsTrigger value="claims" className="gap-2">
+                    <FileText className="h-4 w-4" />
+                    {userRole === 'authority' ? 'Review Claims' : 'My Claims'}
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
-            {activeView === 'grid' && userRole !== 'researcher' && (
+            {activeView === 'grid' && userRole !== 'authority' && (
               <Button variant="blockchain" onClick={() => setShowAddDialog(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add Plant
@@ -227,7 +236,7 @@ const Index = () => {
                 Begin your journey by adding your first plant. Each plant gets a unique blockchain identity
                 that tracks its entire growth history with AI-powered insights.
               </p>
-              {userRole !== 'researcher' && (
+              {userRole !== 'authority' && (
                 <Button variant="hero" onClick={() => setShowAddDialog(true)} className="mt-4">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Your First Plant
@@ -237,6 +246,34 @@ const Index = () => {
           </div>
         ) : activeView === 'dashboard' ? (
           <Dashboard plants={plants} />
+        ) : activeView === 'claims' ? (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="flex items-center gap-3">
+              <Shield className="w-8 h-8 text-primary" />
+              <div>
+                <h2 className="text-3xl font-bold">
+                  {userRole === 'authority' ? 'Claim Verification' : 'Subsidy & Insurance Claims'}
+                </h2>
+                <p className="text-muted-foreground mt-1">
+                  {userRole === 'authority' 
+                    ? 'Review and process farmer claims' 
+                    : 'Submit and track your government scheme claims'}
+                </p>
+              </div>
+            </div>
+            
+            {userRole === 'authority' ? (
+              <AuthorityClaimApproval claims={claims} loading={claimsLoading} />
+            ) : (
+              <>
+                <ClaimSubmission plants={plants} />
+                <div className="mt-8">
+                  <h3 className="text-xl font-semibold mb-4">Your Claims</h3>
+                  <ClaimsList claims={claims} loading={claimsLoading} />
+                </div>
+              </>
+            )}
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {plants.map((plant) => (
