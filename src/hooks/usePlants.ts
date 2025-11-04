@@ -17,7 +17,7 @@ import { Plant } from '@/types/plant';
 export const usePlants = () => {
   const [plants, setPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
 
   useEffect(() => {
     if (!user) {
@@ -26,10 +26,17 @@ export const usePlants = () => {
       return;
     }
 
-    const q = query(
-      collection(db, 'plants'),
-      where('userId', '==', user.uid)
-    );
+    let q;
+    if (userRole === 'authority') {
+      // Authorities can view all plants
+      q = collection(db, 'plants');
+    } else {
+      // Farmers can only view their own plants
+      q = query(
+        collection(db, 'plants'),
+        where('userId', '==', user.uid)
+      );
+    }
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const plantsData = snapshot.docs.map(doc => ({
@@ -41,7 +48,7 @@ export const usePlants = () => {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, userRole]);
 
   const addPlant = async (plant: Omit<Plant, 'id'>) => {
     if (!user) {

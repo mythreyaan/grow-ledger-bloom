@@ -17,6 +17,7 @@ import AISuggestions from "./AISuggestions";
 import { BlockchainExplorer } from "./BlockchainExplorer";
 import { AIPredictor } from "./AIPredictor";
 import { useAuth } from "@/contexts/AuthContext";
+import { OTPVerification } from "./OTPVerification";
 
 interface PlantDetailViewProps {
   plant: Plant | null;
@@ -30,12 +31,14 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
   const [showAddRecord, setShowAddRecord] = useState(false);
   const [hardwareMode, setHardwareMode] = useState(false);
   const [isHardwareConnected, setIsHardwareConnected] = useState(false);
+  const [showOTP, setShowOTP] = useState(false);
   const [recordForm, setRecordForm] = useState({
     height: "",
     waterLevel: "",
     sunlightHours: "",
     temperature: "",
     notes: "",
+    imageUrl: "",
   });
 
   // Simulate hardware data polling when in hardware mode
@@ -70,6 +73,12 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
   if (!plant) return null;
 
   const handleAddRecord = async () => {
+    // Require OTP when submitting manual records
+    if (!(hardwareMode && isHardwareConnected)) {
+      setShowOTP(true);
+      return;
+    }
+
     const timestamp = Date.now();
     const previousHash = plant.growthRecords.length > 0
       ? plant.growthRecords[plant.growthRecords.length - 1].hash
@@ -84,15 +93,50 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
       temperature: parseFloat(recordForm.temperature),
       notes: recordForm.notes,
       previousHash,
-      source: hardwareMode && isHardwareConnected ? 'automatic' as const : 'manual' as const,
+      source: 'automatic' as const,
     };
 
     const hash = await createGrowthRecordHash(recordData);
     const newRecord: GrowthRecord = { ...recordData, hash };
 
     onAddRecord(plant.id, newRecord);
-    setRecordForm({ height: "", waterLevel: "", sunlightHours: "", temperature: "", notes: "" });
+    setRecordForm({ height: "", waterLevel: "", sunlightHours: "", temperature: "", notes: "", imageUrl: "" });
     setShowAddRecord(false);
+  };
+
+  const handleOTPVerify = async () => {
+    // Called for manual submissions
+    if (!recordForm.imageUrl) {
+      alert('Please attach an image URL for manual record.');
+      return;
+    }
+
+    const timestamp = Date.now();
+    const previousHash = plant.growthRecords.length > 0
+      ? plant.growthRecords[plant.growthRecords.length - 1].hash
+      : plant.genesisHash;
+
+    const recordData = {
+      id: `record-${timestamp}`,
+      timestamp,
+      height: parseFloat(recordForm.height),
+      waterLevel: parseFloat(recordForm.waterLevel),
+      sunlightHours: parseFloat(recordForm.sunlightHours),
+      temperature: parseFloat(recordForm.temperature),
+      notes: recordForm.notes,
+      previousHash,
+      source: 'manual' as const,
+      imageUrl: recordForm.imageUrl,
+      otpVerified: true as const,
+    };
+
+    const hash = await createGrowthRecordHash(recordData);
+    const newRecord: GrowthRecord = { ...recordData, hash };
+
+    onAddRecord(plant.id, newRecord);
+    setRecordForm({ height: "", waterLevel: "", sunlightHours: "", temperature: "", notes: "", imageUrl: "" });
+    setShowAddRecord(false);
+    setShowOTP(false);
   };
 
   const toggleHardwareConnection = () => {
