@@ -95,15 +95,17 @@ export const AuthorityClaimApproval = ({ claims, loading }: AuthorityClaimApprov
               </div>
               <div>
                 <p className="text-muted-foreground">Scheme Type</p>
-                <p className="font-medium capitalize">{claim.schemeType}</p>
+                <Badge variant="secondary" className="capitalize mt-1">
+                  {claim.schemeType === 'subsidy' ? '🌾 Subsidy Scheme' : '🛡️ Insurance Scheme'}
+                </Badge>
               </div>
               <div>
                 <p className="text-muted-foreground">Claim Amount</p>
                 <p className="font-medium text-lg">₹{claim.claimAmount.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Plant ID</p>
-                <p className="font-medium text-xs">{claim.plantId}</p>
+                <p className="text-muted-foreground">Plant Name</p>
+                <p className="font-medium">{claim.plantName || 'N/A'}</p>
               </div>
             </div>
 

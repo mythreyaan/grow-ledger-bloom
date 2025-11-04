@@ -6,6 +6,7 @@ export type ClaimStatus = 'pending' | 'approved' | 'rejected';
 export interface Claim {
   id: string;
   plantId: string;
+  plantName: string;
   farmerId: string;
   farmerName: string;
   schemeType: SchemeType;

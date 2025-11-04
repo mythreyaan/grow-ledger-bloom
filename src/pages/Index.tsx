@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sprout, Plus, LogOut, BarChart3, Grid3X3, FileText, Shield } from "lucide-react";
+import { Sprout, Plus, BarChart3, Grid3X3, FileText, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlants } from "@/hooks/usePlants";
 import { useAutomaticRecording } from "@/hooks/useAutomaticRecording";
@@ -26,7 +26,7 @@ const Index = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDetailView, setShowDetailView] = useState(false);
   const [activeView, setActiveView] = useState<'grid' | 'dashboard' | 'claims'>('grid');
-  const { user, userRole, logout } = useAuth();
+  const { user, userRole } = useAuth();
   const { plants, loading, addPlant, updatePlant, deletePlant } = usePlants();
   const { claims, loading: claimsLoading } = useClaims();
   
@@ -76,13 +76,6 @@ const Index = () => {
     setShowDetailView(true);
   };
 
-  const handleLogout = async () => {
-    await logout();
-    toast.success("Signed out", {
-      description: "You have been successfully signed out.",
-    });
-  };
-
   const calculateStats = (): PlantStats => {
     const totalRecords = plants.reduce((sum, plant) => sum + plant.growthRecords.length, 0);
     const avgGrowth = plants.length > 0
@@ -121,24 +114,8 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
         </div>
         
-        <div className="relative z-10 container mx-auto px-4 py-24 md:py-32">
+        <div className="relative z-10 container mx-auto px-4 py-16 md:py-24">
           <div className="max-w-4xl mx-auto text-center space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex-1" />
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground hidden sm:inline">
-                  {user?.email}
-                </span>
-                <Button 
-                  onClick={handleLogout}
-                  variant="outline"
-                  size="sm"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </Button>
-              </div>
-            </div>
             
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
               <span className="gradient-nature bg-clip-text text-transparent">GrowLedger</span>{" "}

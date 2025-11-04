@@ -346,6 +346,21 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
                 />
               </div>
               
+              {!(hardwareMode && isHardwareConnected) && (
+                <div className="space-y-2">
+                  <Label htmlFor="imageUrl">Plant Image URL (Required for Manual) *</Label>
+                  <Input
+                    id="imageUrl"
+                    type="url"
+                    value={recordForm.imageUrl}
+                    onChange={(e) => setRecordForm({ ...recordForm, imageUrl: e.target.value })}
+                    placeholder="https://..."
+                    className="glass-card"
+                    required={!(hardwareMode && isHardwareConnected)}
+                  />
+                </div>
+              )}
+              
               <div className="flex gap-2">
                 <Button onClick={handleAddRecord} variant="hero" className="flex-1">
                   Submit Record
@@ -356,6 +371,13 @@ export const PlantDetailView = ({ plant, open, onOpenChange, onAddRecord }: Plan
               </div>
             </div>
           )}
+
+          <OTPVerification
+            open={showOTP}
+            onOpenChange={setShowOTP}
+            onVerify={handleOTPVerify}
+            purpose="manual growth record"
+          />
 
           <Separator />
 

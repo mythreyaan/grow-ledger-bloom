@@ -92,8 +92,24 @@ export const ClaimSubmission = ({ plants }: ClaimSubmissionProps) => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="subsidy">Subsidy</SelectItem>
-                <SelectItem value="insurance">Insurance</SelectItem>
+                <SelectItem value="subsidy">
+                  <div className="flex items-center gap-2">
+                    <span>🌾</span>
+                    <div>
+                      <p className="font-medium">Subsidy Scheme</p>
+                      <p className="text-xs text-muted-foreground">PMFBY, Organic farming support</p>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="insurance">
+                  <div className="flex items-center gap-2">
+                    <span>🛡️</span>
+                    <div>
+                      <p className="font-medium">Insurance Scheme</p>
+                      <p className="text-xs text-muted-foreground">Crop damage, Natural disaster coverage</p>
+                    </div>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
